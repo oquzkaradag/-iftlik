@@ -1,0 +1,50 @@
+name: APK olustur
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zip dosyasini ac
+        run: unzip -o ./koyun-ciftligi-apk.zip
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      - name: three.js indir
+        working-directory: koyun-ciftligi-apk
+        run: curl -fsSL -o app/src/main/assets/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+
+      - name: APK derle
+        working-directory: koyun-ciftligi-apk
+        run: gradle assembleDebug --no-daemon
+
+      - name: APK adlandir
+        run: cp koyun-ciftligi-apk/app/build/outputs/apk/debug/app-debug.apk KoyunCiftligi-v1.0.${{ github.run_number }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KoyunCiftligi-apk
+          path: KoyunCiftligi-v1.0.${{ github.run_number }}.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Koyun Çiftliği 3D v1.0.${{ github.run_number }}
+          files: KoyunCiftligi-v1.0.${{ github.run_number }}.apk
